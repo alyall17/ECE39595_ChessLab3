@@ -9,6 +9,13 @@
 
   class ChessPiece
   {
+  protected:
+    ChessBoard &board;
+    Color color;
+    Type type;
+    int row;
+    int column;
+
   public:
     /**
      * @brief

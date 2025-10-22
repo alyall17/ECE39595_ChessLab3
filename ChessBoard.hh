@@ -14,7 +14,7 @@ namespace Student
     private:
         int numRows = 0;
         int numCols = 0;
-        Color turn = White;
+        // TODO: Implement turn-based moves later
         /**
          * @brief
          * A 2D vector of pointers to ChessPiece objects.
