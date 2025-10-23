@@ -96,3 +96,14 @@ std::ostringstream ChessBoard::displayBoard()
 
     return outputString;
 }
+
+ChessBoard::~ChessBoard()
+{
+    for (int r = 0; r < numRows; r++)
+    {
+        for (int c = 0; c < numCols; c++)
+        {
+            delete board[r][c];  // safely deletes nullptr too
+        }
+    }
+}

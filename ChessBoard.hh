@@ -35,6 +35,7 @@ namespace Student
          * Number of columns of the chessboard
          */
         ChessBoard(int numRow, int numCol);
+        ~ChessBoard();
 
         /**
          * @return
