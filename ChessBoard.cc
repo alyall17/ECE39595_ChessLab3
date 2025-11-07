@@ -4,6 +4,8 @@
 #include "BishopPiece.hh"
 #include "KingPiece.hh"
 
+Color turn = White;
+
 using Student::ChessBoard;
 
 ChessBoard::ChessBoard(int numRow, int numCol)
@@ -59,9 +61,54 @@ bool ChessBoard::isValidMove(int fromRow, int fromColumn, int toRow, int toColum
     return piece->canMoveToLocation(toRow, toColumn);
 }
 
-// Dummy placeholders for Part 1
-bool ChessBoard::movePiece(int, int, int, int) { return false; }
-bool ChessBoard::isPieceUnderThreat(int, int) { return false; }
+// Dummy placeholders for Part 1 - START part 2 implementation
+bool ChessBoard::movePiece(int fromRow, int fromColumn, int toRow, int toColumn)
+{
+
+    if (fromRow < 0 || fromRow >= numRows || fromColumn < 0 || fromColumn >= numCols) return false;
+    if (toRow   < 0 || toRow   >= numRows || toColumn   < 0 || toColumn   >= numCols) return false;
+
+    ChessPiece* piece = board.at(fromRow).at(fromColumn);
+    if (piece == nullptr) return false;
+    if (piece->getColor() != turn) return false;
+    if (!isValidMove(fromRow, fromColumn, toRow, toColumn)) return false;
+
+    ChessPiece* dest = board.at(toRow).at(toColumn);
+    if (dest != nullptr) {
+        delete dest;               
+        dest = nullptr;
+    }
+
+    board.at(toRow).at(toColumn) = piece;
+    board.at(fromRow).at(fromColumn) = nullptr;
+    piece->setPosition(toRow, toColumn);
+    turn = (turn == White ? Black : White);
+    return true;
+}
+
+bool ChessBoard::isPieceUnderThreat(int row, int column)
+{
+    ChessPiece* target = nullptr;
+    if (row >= 0 && row < numRows && column >= 0 && column < numCols) {
+        target = board.at(row).at(column);
+    }
+    if (target == nullptr) return false;
+
+    Color defender = target->getColor();
+
+    for (int r = 0; r < numRows; ++r) {
+        for (int c = 0; c < numCols; ++c) {
+            ChessPiece* attacker = board.at(r).at(c);
+            if (attacker == nullptr) continue;
+            if (attacker->getColor() == defender) continue;
+            if (attacker->canMoveToLocation(row, column)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+//Part 2 implementation END
 
 std::ostringstream ChessBoard::displayBoard()
 {
