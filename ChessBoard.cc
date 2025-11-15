@@ -4,8 +4,6 @@
 #include "BishopPiece.hh"
 #include "KingPiece.hh"
 
-Color turn = White;
-
 using Student::ChessBoard;
 
 ChessBoard::ChessBoard(int numRow, int numCol)
@@ -45,7 +43,6 @@ void ChessBoard::createChessPiece(Color col, Type ty, int startRow, int startCol
 
 bool ChessBoard::isValidMove(int fromRow, int fromColumn, int toRow, int toColumn)
 {
-
     if (fromRow < 0 || fromRow >= numRows || fromColumn < 0 || fromColumn >= numCols)
         return false;
     if (toRow < 0 || toRow >= numRows || toColumn < 0 || toColumn >= numCols)
@@ -55,27 +52,29 @@ bool ChessBoard::isValidMove(int fromRow, int fromColumn, int toRow, int toColum
     if (piece == nullptr)
         return false;
 
-
+    // Same spot
     if (fromRow == toRow && fromColumn == toColumn)
         return false;
 
+    // Basic movement rules (per-piece)
     if (!piece->canMoveToLocation(toRow, toColumn))
         return false;
 
-//Part 3
+    // For Part 3: a move is invalid if it would leave the mover's own king in check.
+    // Simulate the move, check king safety, then revert.
     Color moverColor = piece->getColor();
 
     ChessPiece *captured = board.at(toRow).at(toColumn);
+
+    // perform move temporarily
     board.at(toRow).at(toColumn) = piece;
     board.at(fromRow).at(fromColumn) = nullptr;
-
-
-    int originalRow = piece->getRow();
-    int originalCol = piece->getColumn();
+    int oldRow = piece->getRow();
+    int oldCol = piece->getColumn();
     piece->setPosition(toRow, toColumn);
 
-    int kingRow = -1;
-    int kingCol = -1;
+    // find king of moverColor
+    int kingRow = -1, kingCol = -1;
     for (int r = 0; r < numRows; ++r)
     {
         for (int c = 0; c < numCols; ++c)
@@ -88,8 +87,7 @@ bool ChessBoard::isValidMove(int fromRow, int fromColumn, int toRow, int toColum
                 break;
             }
         }
-        if (kingRow != -1)
-            break;
+        if (kingRow != -1) break;
     }
 
     bool kingInCheck = false;
@@ -98,16 +96,13 @@ bool ChessBoard::isValidMove(int fromRow, int fromColumn, int toRow, int toColum
         kingInCheck = isPieceUnderThreat(kingRow, kingCol);
     }
 
+    // revert simulation
     board.at(fromRow).at(fromColumn) = piece;
     board.at(toRow).at(toColumn) = captured;
-    piece->setPosition(originalRow, originalCol);
+    piece->setPosition(oldRow, oldCol);
 
-    if (kingInCheck)
-        return false;
-
-    return true;
+    return !kingInCheck;
 }
-
 
 // Dummy placeholders for Part 1 - START part 2 implementation - EDITED for part 3
 bool ChessBoard::movePiece(int fromRow, int fromColumn, int toRow, int toColumn)
@@ -198,7 +193,7 @@ bool ChessBoard::isPieceUnderThreat(int row, int column)
     }
     return false;
 }
-//Part 2 implementation END - Part 3 first edit end
+//Part 2 implementation END
 
 std::ostringstream ChessBoard::displayBoard()
 {
