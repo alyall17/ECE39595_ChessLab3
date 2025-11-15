@@ -4,8 +4,6 @@
 #include "BishopPiece.hh"
 #include "KingPiece.hh"
 
-Color turn = White;
-
 using Student::ChessBoard;
 
 ChessBoard::ChessBoard(int numRow, int numCol)
@@ -58,7 +56,52 @@ bool ChessBoard::isValidMove(int fromRow, int fromColumn, int toRow, int toColum
     if (fromRow == toRow && fromColumn == toColumn)
         return false;
 
-    return piece->canMoveToLocation(toRow, toColumn);
+    // Basic movement rules (per-piece)
+    if (!piece->canMoveToLocation(toRow, toColumn))
+        return false;
+
+    // For Part 3: a move is invalid if it would leave the mover's own king in check.
+    // Simulate the move, check king safety, then revert.
+    Color moverColor = piece->getColor();
+
+    ChessPiece *captured = board.at(toRow).at(toColumn);
+
+    // perform move temporarily
+    board.at(toRow).at(toColumn) = piece;
+    board.at(fromRow).at(fromColumn) = nullptr;
+    int oldRow = piece->getRow();
+    int oldCol = piece->getColumn();
+    piece->setPosition(toRow, toColumn);
+
+    // find king of moverColor
+    int kingRow = -1, kingCol = -1;
+    for (int r = 0; r < numRows; ++r)
+    {
+        for (int c = 0; c < numCols; ++c)
+        {
+            ChessPiece *p = board.at(r).at(c);
+            if (p != nullptr && p->getColor() == moverColor && p->getType() == King)
+            {
+                kingRow = r;
+                kingCol = c;
+                break;
+            }
+        }
+        if (kingRow != -1) break;
+    }
+
+    bool kingInCheck = false;
+    if (kingRow != -1 && kingCol != -1)
+    {
+        kingInCheck = isPieceUnderThreat(kingRow, kingCol);
+    }
+
+    // revert simulation
+    board.at(fromRow).at(fromColumn) = piece;
+    board.at(toRow).at(toColumn) = captured;
+    piece->setPosition(oldRow, oldCol);
+
+    return !kingInCheck;
 }
 
 // Dummy placeholders for Part 1 - START part 2 implementation - EDITED for part 3

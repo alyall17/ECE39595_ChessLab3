@@ -23,6 +23,8 @@ namespace Student
          * *(board.at(row).at(col)) returns the ChessPiece object itself.
          */
         std::vector<std::vector<ChessPiece *>> board;
+    // Track whose turn it is. Initialized to White (white moves first).
+    Color turn = White;
 
     public:
         /**
