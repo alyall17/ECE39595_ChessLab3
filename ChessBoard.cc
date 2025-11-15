@@ -45,6 +45,7 @@ void ChessBoard::createChessPiece(Color col, Type ty, int startRow, int startCol
 
 bool ChessBoard::isValidMove(int fromRow, int fromColumn, int toRow, int toColumn)
 {
+
     if (fromRow < 0 || fromRow >= numRows || fromColumn < 0 || fromColumn >= numCols)
         return false;
     if (toRow < 0 || toRow >= numRows || toColumn < 0 || toColumn >= numCols)
@@ -54,12 +55,59 @@ bool ChessBoard::isValidMove(int fromRow, int fromColumn, int toRow, int toColum
     if (piece == nullptr)
         return false;
 
-    // Same spot
+
     if (fromRow == toRow && fromColumn == toColumn)
         return false;
 
-    return piece->canMoveToLocation(toRow, toColumn);
+    if (!piece->canMoveToLocation(toRow, toColumn))
+        return false;
+
+//Part 3
+    Color moverColor = piece->getColor();
+
+    ChessPiece *captured = board.at(toRow).at(toColumn);
+    board.at(toRow).at(toColumn) = piece;
+    board.at(fromRow).at(fromColumn) = nullptr;
+
+
+    int originalRow = piece->getRow();
+    int originalCol = piece->getColumn();
+    piece->setPosition(toRow, toColumn);
+
+    int kingRow = -1;
+    int kingCol = -1;
+    for (int r = 0; r < numRows; ++r)
+    {
+        for (int c = 0; c < numCols; ++c)
+        {
+            ChessPiece *p = board.at(r).at(c);
+            if (p != nullptr && p->getColor() == moverColor && p->getType() == King)
+            {
+                kingRow = r;
+                kingCol = c;
+                break;
+            }
+        }
+        if (kingRow != -1)
+            break;
+    }
+
+    bool kingInCheck = false;
+    if (kingRow != -1 && kingCol != -1)
+    {
+        kingInCheck = isPieceUnderThreat(kingRow, kingCol);
+    }
+
+    board.at(fromRow).at(fromColumn) = piece;
+    board.at(toRow).at(toColumn) = captured;
+    piece->setPosition(originalRow, originalCol);
+
+    if (kingInCheck)
+        return false;
+
+    return true;
 }
+
 
 // Dummy placeholders for Part 1 - START part 2 implementation - EDITED for part 3
 bool ChessBoard::movePiece(int fromRow, int fromColumn, int toRow, int toColumn)
@@ -150,7 +198,7 @@ bool ChessBoard::isPieceUnderThreat(int row, int column)
     }
     return false;
 }
-//Part 2 implementation END
+//Part 2 implementation END - Part 3 first edit end
 
 std::ostringstream ChessBoard::displayBoard()
 {
