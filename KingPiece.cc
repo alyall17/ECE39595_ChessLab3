@@ -1,4 +1,3 @@
-// KingPiece.cc
 #include "KingPiece.hh"
 #include "ChessBoard.hh"
 #include <cmath>
@@ -13,19 +12,15 @@ KingPiece::KingPiece(ChessBoard &board, Color color, int row, int column)
 
 bool KingPiece::canMoveToLocation(int toRow, int toColumn)
 {
-    // Basic bounds check (ChessBoard::getNumRows/getNumCols exist)
     if (toRow < 0 || toRow >= board.getNumRows()) return false;
     if (toColumn < 0 || toColumn >= board.getNumCols()) return false;
 
-    // Can't stay in same place
     if (toRow == row && toColumn == column) return false;
 
     int dr = std::abs(toRow - row);
     int dc = std::abs(toColumn - column);
 
-    // King moves one square in any direction
     if (dr <= 1 && dc <= 1) {
-        // Destination may be empty or an opponent piece.
         ChessPiece *dest = board.getPiece(toRow, toColumn);
         if (dest == nullptr) return true;
         return dest->getColor() != color;
@@ -41,7 +36,7 @@ bool KingPiece::canMoveToLocation(int toRow, int toColumn)
         if (rook->hasMoved()) return false;
 
         if (board.isSquareUnderAttack(row, column, color)) return false;
-        
+
         int c = column + dir;
         while (c != rookCol) {
             if (board.getPiece(row, c) != nullptr && c != toColumn) return false;

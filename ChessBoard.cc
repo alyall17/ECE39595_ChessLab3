@@ -68,8 +68,6 @@ bool ChessBoard::isValidMove(int fromRow, int fromColumn, int toRow, int toColum
     if (!piece->canMoveToLocation(toRow, toColumn))
         return false;
 
-    // For Part 3: a move is invalid if it would leave the mover's own king in check.
-    // Simulate the move, check king safety, then revert.
     Color moverColor = piece->getColor();
 
     ChessPiece *captured = board.at(toRow).at(toColumn);
@@ -251,16 +249,15 @@ bool ChessBoard::isSquareUnderAttack(int row, int column, Color defenderColor)
     return false;
 }
 
-// Minimal stubs for instructor harness compatibility
 int ChessBoard::scoreBoard()
 {
-    // Return a default score (0) — placeholder only.
+
     return 0;
 }
 
 int ChessBoard::getHighestNextScore()
 {
-    // Return a default next-score (0) — placeholder only.
+
     return 0;
 }
 //Part 2 implementation END
@@ -319,7 +316,7 @@ bool ChessBoard::isCheckmate(Color color)
 {
     if (!isInCheck(color)) return false;
 
-    // Try every legal move for the player; if any move removes check, not checkmate
+
     for (int r = 0; r < numRows; ++r) {
         for (int c = 0; c < numCols; ++c) {
             ChessPiece *p = board.at(r).at(c);
@@ -336,23 +333,19 @@ bool ChessBoard::isCheckmate(Color color)
 
 bool ChessBoard::isEnPassantCapture(int fromRow, int fromCol, int toRow, int toCol, Color moverColor)
 {
-    // en-passant possible when pawn moves diagonally into an empty square
-    // captured pawn must have just moved two squares to adjacent file
     if (fromRow < 0 || fromRow >= numRows) return false;
     if (toRow < 0 || toRow >= numRows) return false;
     if (fromCol < 0 || fromCol >= numCols) return false;
     if (toCol < 0 || toCol >= numCols) return false;
 
     ChessPiece* dest = board.at(toRow).at(toCol);
-    if (dest != nullptr) return false; // only when landing square is empty
+    if (dest != nullptr) return false; 
 
-    // captured pawn should be at (fromRow, toCol)
     ChessPiece* possible = board.at(fromRow).at(toCol);
     if (possible == nullptr) return false;
     if (possible->getType() != Pawn) return false;
     if (possible->getColor() == moverColor) return false;
 
-    // last move must be that pawn moving two squares to its current position
     if (lastMoveType != Pawn) return false;
     if (lastMoveColor == moverColor) return false;
     if (lastToRow == possible->getRow() && lastToCol == possible->getColumn() && std::abs(lastFromRow - lastToRow) == 2) {
