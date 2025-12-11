@@ -3,6 +3,8 @@
 #include "RookPiece.hh"
 #include "BishopPiece.hh"
 #include "KingPiece.hh"
+#include "KnightPiece.hh"
+#include "QueenPiece.hh"
 
 using Student::ChessBoard;
 
@@ -35,6 +37,12 @@ void ChessBoard::createChessPiece(Color col, Type ty, int startRow, int startCol
         break;
     case King:
         piece = new KingPiece(*this, col, startRow, startColumn);
+        break;
+    case Knight:
+        piece = new KnightPiece(*this, col, startRow, startColumn);
+        break;
+    case Queen:
+        piece = new QueenPiece(*this, col, startRow, startColumn);
         break;
     }
 
