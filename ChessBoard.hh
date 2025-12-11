@@ -140,8 +140,8 @@ namespace Student
          * instructor tests expect these methods. They return default
          * values and do not affect normal student tests.
          */
-        int scoreBoard();
-        int getHighestNextScore();
+        float scoreBoard();
+        float getHighestNextScore();
 
         // Check-related helpers
         bool isInCheck(Color color);

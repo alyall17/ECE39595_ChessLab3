@@ -249,16 +249,91 @@ bool ChessBoard::isSquareUnderAttack(int row, int column, Color defenderColor)
     return false;
 }
 
-int ChessBoard::scoreBoard()
+float ChessBoard::scoreBoard()
 {
+    // piece values
+    auto pieceValue = [](Type t) -> int {
+        switch (t) {
+        case King: return 200;
+        case Queen: return 9;
+        case Rook: return 5;
+        case Knight: return 3;
+        case Bishop: return 3;
+        case Pawn: return 1;
+        default: return 0;
+        }
+    };
 
-    return 0;
+    Color me = turn;
+    Color opp = (turn == White) ? Black : White;
+
+    int myMaterial = 0;
+    int oppMaterial = 0;
+    int myMoves = 0;
+    int oppMoves = 0;
+
+    for (int r = 0; r < numRows; ++r) {
+        for (int c = 0; c < numCols; ++c) {
+            ChessPiece* p = board.at(r).at(c);
+            if (p == nullptr) continue;
+            if (p->getColor() == me) {
+                myMaterial += pieceValue(p->getType());
+                for (int tr = 0; tr < numRows; ++tr) for (int tc = 0; tc < numCols; ++tc) if (isValidMove(r,c,tr,tc)) ++myMoves;
+            } else {
+                oppMaterial += pieceValue(p->getType());
+                for (int tr = 0; tr < numRows; ++tr) for (int tc = 0; tc < numCols; ++tc) if (isValidMove(r,c,tr,tc)) ++oppMoves;
+            }
+        }
+    }
+
+    float score = (float)myMaterial + 0.1f * (float)myMoves - ((float)oppMaterial + 0.1f * (float)oppMoves);
+    return score;
 }
 
-int ChessBoard::getHighestNextScore()
+float ChessBoard::getHighestNextScore()
 {
+    float best = -1e9f;
+    // iterate all pieces
+    for (int r = 0; r < numRows; ++r) {
+        for (int c = 0; c < numCols; ++c) {
+            ChessPiece *p = board.at(r).at(c);
+            if (p == nullptr || p->getColor() != turn) continue;
+            for (int tr = 0; tr < numRows; ++tr) {
+                for (int tc = 0; tc < numCols; ++tc) {
+                    if (!isValidMove(r,c,tr,tc)) continue;
 
-    return 0;
+                    ChessBoard *tmp = new ChessBoard(numRows, numCols);
+                    for (int rr = 0; rr < numRows; ++rr) {
+                        for (int cc = 0; cc < numCols; ++cc) {
+                            ChessPiece *pp = board.at(rr).at(cc);
+                            if (pp == nullptr) continue;
+                            tmp->createChessPiece(pp->getColor(), pp->getType(), rr, cc);
+                            ChessPiece *qq = tmp->getPiece(rr, cc);
+                            if (qq) qq->setHasMoved(pp->hasMoved());
+                        }
+                    }
+                    tmp->lastFromRow = lastFromRow;
+                    tmp->lastFromCol = lastFromCol;
+                    tmp->lastToRow = lastToRow;
+                    tmp->lastToCol = lastToCol;
+                    tmp->lastMoveType = lastMoveType;
+                    tmp->lastMoveColor = lastMoveColor;
+                    tmp->turn = turn;
+
+                    bool ok = tmp->movePiece(r,c,tr,tc);
+                    if (ok) {
+                        
+                        tmp->turn = p->getColor();
+                        float sc = tmp->scoreBoard();
+                        if (sc > best) best = sc;
+                    }
+                    delete tmp;
+                }
+            }
+        }
+    }
+    if (best == -1e9f) return scoreBoard();
+    return best;
 }
 //Part 2 implementation END
 
