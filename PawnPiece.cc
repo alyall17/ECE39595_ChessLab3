@@ -37,6 +37,11 @@ bool PawnPiece::canMoveToLocation(int toRow, int toColumn)
     {
         if (dest != nullptr && dest->getColor() != color)
             return true;
+        // En-passant
+        if (dest == nullptr) {
+            if (board.isEnPassantCapture(row, column, toRow, toColumn, color))
+                return true;
+        }
     }
 
     return false;

@@ -15,6 +15,7 @@
     Type type;
     int row;
     int column;
+    bool moved = false;
 
   public:
     /**
@@ -73,6 +74,16 @@
      * The new column number of the piece.
      */
     virtual void setPosition(int row, int column);
+
+    /**
+     * @brief Return whether this piece has previously moved.
+     */
+    bool hasMoved();
+
+    /**
+     * @brief Mark the piece as moved or not.
+     */
+    void setHasMoved(bool m);
 
     /**
      * @brief

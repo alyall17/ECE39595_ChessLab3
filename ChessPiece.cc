@@ -16,3 +16,13 @@ void ChessPiece::setPosition(int r, int c)
     row = r;
     column = c;
 }
+
+bool ChessPiece::hasMoved()
+{
+    return moved;
+}
+
+void ChessPiece::setHasMoved(bool m)
+{
+    moved = m;
+}

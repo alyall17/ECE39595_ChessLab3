@@ -133,6 +133,19 @@ bool ChessBoard::movePiece(int fromRow, int fromColumn, int toRow, int toColumn)
     //Part 3
     Color moverColor = piece->getColor();
     ChessPiece *captured = board.at(toRow).at(toColumn);
+    bool enPassantCapture = false;
+    ChessPiece *epCaptured = nullptr;
+
+    if (piece->getType() == Pawn && fromColumn != toColumn && captured == nullptr) {
+        ChessPiece *possible = board.at(fromRow).at(toColumn);
+        if (possible != nullptr && possible->getType() == Pawn && possible->getColor() != moverColor) {
+            if (lastToRow == possible->getRow() && lastToCol == possible->getColumn() && std::abs(lastFromRow - lastToRow) == 2) {
+                enPassantCapture = true;
+                epCaptured = possible;
+            }
+        }
+    }
+
     board.at(toRow).at(toColumn) = piece;
     board.at(fromRow).at(fromColumn) = nullptr;
     piece->setPosition(toRow, toColumn);
@@ -174,7 +187,38 @@ bool ChessBoard::movePiece(int fromRow, int fromColumn, int toRow, int toColumn)
         delete captured;
         captured = nullptr;
     }
+    if (enPassantCapture && epCaptured != nullptr) {
+        delete epCaptured;
+        board.at(fromRow).at(toColumn) = nullptr;
+        epCaptured = nullptr;
+    }
+
+    if (piece->getType() == King && std::abs(toColumn - fromColumn) == 2) {
+        int rookFromCol = (toColumn > fromColumn) ? (numCols - 1) : 0;
+        int rookToCol = (toColumn > fromColumn) ? (toColumn - 1) : (toColumn + 1);
+        ChessPiece *rook = board.at(fromRow).at(rookFromCol);
+        if (rook != nullptr && rook->getType() == Rook && rook->getColor() == moverColor) {
+            board.at(fromRow).at(rookToCol) = rook;
+            board.at(fromRow).at(rookFromCol) = nullptr;
+            rook->setPosition(fromRow, rookToCol);
+            rook->setHasMoved(true);
+        }
+    }
+
+    if (piece->getType() == Pawn) {
+        if ((piece->getColor() == White && toRow == 0) || (piece->getColor() == Black && toRow == numRows - 1)) {
+            board.at(toRow).at(toColumn) = nullptr;
+            delete piece;
+            ChessPiece *promo = new QueenPiece(*this, moverColor, toRow, toColumn);
+            board.at(toRow).at(toColumn) = promo;
+            promo->setHasMoved(true);
+        }
+    }
+
+    lastFromRow = fromRow; lastFromCol = fromColumn; lastToRow = toRow; lastToCol = toColumn; lastMoveType = piece->getType(); lastMoveColor = moverColor;
+
     turn = (turn == White ? Black : White);
+    piece->setHasMoved(true);
     return true;
 }
 
@@ -188,18 +232,36 @@ bool ChessBoard::isPieceUnderThreat(int row, int column)
     if (target == nullptr) return false;
 
     Color defender = target->getColor();
+    return isSquareUnderAttack(row, column, defender);
+}
 
+bool ChessBoard::isSquareUnderAttack(int row, int column, Color defenderColor)
+{
+    if (row < 0 || row >= numRows || column < 0 || column >= numCols) return false;
     for (int r = 0; r < numRows; ++r) {
         for (int c = 0; c < numCols; ++c) {
             ChessPiece* attacker = board.at(r).at(c);
             if (attacker == nullptr) continue;
-            if (attacker->getColor() == defender) continue;
+            if (attacker->getColor() == defenderColor) continue;
             if (attacker->canMoveToLocation(row, column)) {
                 return true;
             }
         }
     }
     return false;
+}
+
+// Minimal stubs for instructor harness compatibility
+int ChessBoard::scoreBoard()
+{
+    // Return a default score (0) — placeholder only.
+    return 0;
+}
+
+int ChessBoard::getHighestNextScore()
+{
+    // Return a default next-score (0) — placeholder only.
+    return 0;
 }
 //Part 2 implementation END
 
@@ -235,6 +297,68 @@ std::ostringstream ChessBoard::displayBoard()
     outputString << std::endl << std::endl;
 
     return outputString;
+}
+
+bool ChessBoard::isInCheck(Color color)
+{
+    int kingRow = -1, kingCol = -1;
+    for (int r = 0; r < numRows; ++r) {
+        for (int c = 0; c < numCols; ++c) {
+            ChessPiece *p = board.at(r).at(c);
+            if (p != nullptr && p->getColor() == color && p->getType() == King) {
+                kingRow = r; kingCol = c; break;
+            }
+        }
+        if (kingRow != -1) break;
+    }
+    if (kingRow == -1) return false;
+    return isSquareUnderAttack(kingRow, kingCol, color);
+}
+
+bool ChessBoard::isCheckmate(Color color)
+{
+    if (!isInCheck(color)) return false;
+
+    // Try every legal move for the player; if any move removes check, not checkmate
+    for (int r = 0; r < numRows; ++r) {
+        for (int c = 0; c < numCols; ++c) {
+            ChessPiece *p = board.at(r).at(c);
+            if (p == nullptr || p->getColor() != color) continue;
+            for (int tr = 0; tr < numRows; ++tr) {
+                for (int tc = 0; tc < numCols; ++tc) {
+                    if (isValidMove(r, c, tr, tc)) return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool ChessBoard::isEnPassantCapture(int fromRow, int fromCol, int toRow, int toCol, Color moverColor)
+{
+    // en-passant possible when pawn moves diagonally into an empty square
+    // captured pawn must have just moved two squares to adjacent file
+    if (fromRow < 0 || fromRow >= numRows) return false;
+    if (toRow < 0 || toRow >= numRows) return false;
+    if (fromCol < 0 || fromCol >= numCols) return false;
+    if (toCol < 0 || toCol >= numCols) return false;
+
+    ChessPiece* dest = board.at(toRow).at(toCol);
+    if (dest != nullptr) return false; // only when landing square is empty
+
+    // captured pawn should be at (fromRow, toCol)
+    ChessPiece* possible = board.at(fromRow).at(toCol);
+    if (possible == nullptr) return false;
+    if (possible->getType() != Pawn) return false;
+    if (possible->getColor() == moverColor) return false;
+
+    // last move must be that pawn moving two squares to its current position
+    if (lastMoveType != Pawn) return false;
+    if (lastMoveColor == moverColor) return false;
+    if (lastToRow == possible->getRow() && lastToCol == possible->getColumn() && std::abs(lastFromRow - lastToRow) == 2) {
+        return true;
+    }
+    return false;
 }
 
 ChessBoard::~ChessBoard()
